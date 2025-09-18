@@ -1,0 +1,33 @@
+name: iOS IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.4'
+          channel: 'stable'
+
+      - name: Flutter pub get
+        working-directory: taxi_flutter_app
+        run: flutter pub get
+
+      - name: Build unsigned IPA
+        working-directory: taxi_flutter_app
+        run: flutter build ipa --no-codesign
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FasterTaxi-ipa
+          path: taxi_flutter_app/build/ios/ipa/*.ipa
+
+
