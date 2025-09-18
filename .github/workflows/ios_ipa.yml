@@ -19,8 +19,33 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      - name: Build unsigned IPA
-        run: flutter build ipa --no-codesign
+      - name: Build iOS (no codesign)
+        run: flutter build ios --release --no-codesign
+
+      - name: Package .app into .ipa
+        run: |
+          set -e
+          mkdir -p build/ios/ipa
+          APP_PATH="build/ios/iphoneos/Runner.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "Runner.app not found at $APP_PATH" >&2
+            exit 1
+          fi
+          WORK_DIR=$(mktemp -d)
+          mkdir -p "$WORK_DIR/Payload"
+          cp -R "$APP_PATH" "$WORK_DIR/Payload/"
+          (cd "$WORK_DIR" && zip -qry Runner.ipa Payload)
+          mv "$WORK_DIR/Runner.ipa" build/ios/ipa/Runner.ipa
+          rm -rf "$WORK_DIR"
+
+      - name: List build outputs
+        run: |
+          echo "== build/ios =="
+          ls -la build/ios || true
+          echo "== build/ios/iphoneos =="
+          ls -la build/ios/iphoneos || true
+          echo "== build/ios/ipa =="
+          ls -la build/ios/ipa || true
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
